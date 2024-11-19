@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 import 'signup_screen.dart';
 import 'reset_password_screen.dart';
 
@@ -11,6 +12,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  final Dio _dio = Dio();
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
@@ -32,12 +35,42 @@ class _LoginScreenState extends State<LoginScreen> {
     return null;
   }
 
+  Future<void> _submitData() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final data = {
+      "email": _emailController.text,
+      "password": _passwordController.text,
+    };
+
+    try {
+      final response = await _dio.post(
+        'https://laba12.requestcatcher.com/',
+        data: data,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login successful!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send data: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: Text('Log In'),
-          centerTitle: true,
+        title: Text('Log In'),
+        centerTitle: true,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -52,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'https://www.emmegi.co.uk/wp-content/uploads/2019/01/User-Icon.jpg'),
                   radius: 50,
                 ),
-                SizedBox(height: 30,),
+                SizedBox(height: 30),
                 TextFormField(
                   controller: _emailController,
                   decoration: InputDecoration(labelText: 'Email'),
@@ -69,7 +102,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ElevatedButton(
                   onPressed: () {
                     if (_formKey.currentState!.validate()) {
-                      // Perform login
+                      _submitData();
                     }
                   },
                   child: Text('Login'),
@@ -78,7 +111,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ResetPasswordScreen()),
+                      MaterialPageRoute(
+                          builder: (context) => ResetPasswordScreen()),
                     );
                   },
                   child: Text('Forgot Password?'),

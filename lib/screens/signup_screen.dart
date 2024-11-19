@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
 
 class SignupScreen extends StatefulWidget {
   @override
@@ -10,6 +11,8 @@ class _SignupScreenState extends State<SignupScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  final Dio _dio = Dio();
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
@@ -31,11 +34,44 @@ class _SignupScreenState extends State<SignupScreen> {
     return null;
   }
 
+  Future<void> _submitData() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final data = {
+      "name": _nameController.text,
+      "email": _emailController.text,
+      "password": _passwordController.text,
+    };
+
+    try {
+      final response = await _dio.post(
+        'https://laba12.requestcatcher.com/',
+        data: data,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Registration successful!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${response.statusCode}')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to send data: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Sign Up'),
-        centerTitle: true,),
+      appBar: AppBar(
+        title: Text('Sign Up'),
+        centerTitle: true,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(40.0),
@@ -49,7 +85,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       'https://pluspng.com/img-png/user-png-icon-big-image-png-2240.png'),
                   radius: 50,
                 ),
-                SizedBox(height: 30,),
+                SizedBox(height: 30),
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(labelText: 'Name'),
@@ -71,11 +107,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      // Perform sign up
-                    }
-                  },
+                  onPressed: _submitData,
                   child: Text('Sign Up'),
                 ),
                 OutlinedButton(
